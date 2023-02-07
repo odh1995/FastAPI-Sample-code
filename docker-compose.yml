@@ -1,0 +1,42 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    container_name: app-backend
+    volumes:
+      - ./alembic:/alembic
+    ports:
+      - 30004:9000
+    depends_on:
+      - db
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.fastapi.rule=Host(`fastapi.localhost`)
+  db:
+    container_name: backend_postgres
+    image: postgres:12
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+  pgadmin:
+    container_name: backend_pgadmin
+    image: dpage/pgadmin4
+    restart: always
+    depends_on:
+      - db
+    env_file:
+      - ./.env
+    ports:
+      - '30005:80'
+
+  traefik:
+    image: traefik:v2.3
+    ports:
+      - 30001:80
+      - 30002:8080
+      - 30003:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.toml:/etc/traefik/traefik.toml
